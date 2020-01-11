@@ -36,3 +36,21 @@
     transform: rotate(360deg);
   }
 }
+
+.navbar-brand {
+  display: flex;
+  align-items: right;
+}
+
+.navbar-link {
+  display: flex;
+  align-items: right;
+}
+
+.nav-logo {
+  float: left !important;
+  margin-top: -10px !important;
+  width: 55%;
+  padding: 5px;
+}
+
