@@ -4,6 +4,23 @@ import HomePlaylist from '../components/HomePlaylist.js'
 
 class MainContainer extends React.Component{
 
+    formatDate = (date) => {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+        if (month.length < 2) 
+            month = '0' + month;
+        if (day.length < 2) 
+            day = '0' + day;
+        return [year, month, day].join('-');
+    }
+
+    addDays = (theDate, days) => {
+        return new Date(theDate.getTime() + days*24*60*60*1000);
+    }
+
+
     constructor(){
         super()
         this.state={
@@ -16,6 +33,16 @@ class MainContainer extends React.Component{
     }
 
     handleCitySearch = (city) => {
+        let today = new Date()
+        let first = today.toString().slice(0,10)
+        let second = today.toString().slice(11, 15)
+        let join = first + ',' + second
+        let min_date = (this.formatDate(join))
+        let newDate = this.addDays(today, 60);
+        let first2 = newDate.toString().slice(0,10)
+        let second2 = newDate.toString().slice(11,15)
+        let join2 = first2 + ',' + second2
+        let max_date = (this.formatDate(join2))
         fetch(`https://api.songkick.com/api/3.0/search/locations.json?query=${city}&apikey=r4d7PTJAcB8xIJ3g`)
         .then(resp => resp.json())
         .then(data => {this.setState({
@@ -23,29 +50,17 @@ class MainContainer extends React.Component{
             cityName: data.resultsPage.results.location[0].metroArea.displayName
             })
         })
-        // .then(this.eventSearch(this.state.cityId))
         if(this.state.cityId){
-            fetch(`https://api.songkick.com/api/3.0/metro_areas/${this.state.cityId}/calendar.json?apikey=r4d7PTJAcB8xIJ3g`)
+            fetch(`https://api.songkick.com/api/3.0/metro_areas/${this.state.cityId}/calendar.json?min_date=${min_date}&max_date=${max_date}&apikey=r4d7PTJAcB8xIJ3g`)
             .then(resp => resp.json())
             .then(data => {
                 this.setState({
                     allEvents: data.resultsPage.results.event.slice(0, 5)
                 })
             })
-            // .then(this.state.allEvents.forEach(event => {
-            //     this.setState({
-            //         allEvents2: [...this.state.allEvents2, {
-            //             id: event.id
-            //         }]
-            //     })
-            // }))
-            
         this.handleConcerts(this.state.allEvents)
         }
     }
-
-    //pull event state up a level
-    //componentdidupdate - if getting new props (songs) then set state within main
 
     handleConcerts = (allEvents) => {
         if(allEvents){
@@ -63,27 +78,11 @@ class MainContainer extends React.Component{
     }
 
     componentDidUpdate(prevProps, prevState){
-        // if(prevState.allEvents.length === 5){
-        //     this.state.allEvents.map(event => {
-        //         this.setState({
-        //             events: [...this.state.events, {
-        //                 id: event.id
-        //             }]
-        //         })
-        //     })
-        // }
         if(prevProps.songs){
             this.state.allEvents.forEach(event => {
                 this.props.songs.forEach(song => {
-                    if(event.id === song.id){
-                        event.url = song.url
-                    }
-                })
-            })
-            this.state.allEvents.forEach(event => {
-                this.props.songs.forEach(song => {
-                    if(event.id === song.id){
-                        event.track = song.title
+                    if(event.id === song.artist.id){
+                        event.track = song.track
                     }
                 })
             })

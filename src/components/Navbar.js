@@ -1,7 +1,6 @@
 import React, { Component } from "react";
-import { Fragment } from 'react';
 import {
-  Navbar, NavbarBrand, Nav, NavItem, NavLink, Form, FormControl, Button
+  Navbar
 } from 'react-bootstrap';
 import '../App.css';
 import {

@@ -3,7 +3,7 @@ import SongCard from './SongCard.js';
 
 class HomePlaylist extends React.Component{
     render(){
-        if(this.props.allEvents.length > 0 && this.props.allEvents[0].url){
+        if(this.props.allEvents.length > 0 && this.props.allEvents[0].track){
         return(
             <div>
                 {this.props.cityName} Playlist

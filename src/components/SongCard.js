@@ -2,6 +2,8 @@ import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 
 const SongCard = (props) => {
+    let songSource = `https://open.spotify.com/embed/track/`
+    if(props.event.track){
     return(
         <div>
             <ListGroup>
@@ -16,12 +18,20 @@ const SongCard = (props) => {
                     <br></br>
                     Link: <a href={props.event.uri}>Here</a>
                     <br></br>
-                    Song: <a href={props.event.url}>song</a>
+                    <iframe src= {songSource + props.event.track.id} width="300" height="80" allowtransparency="true" allow="encrypted-media"></iframe>
+                    <br></br>
 
                 </ListGroup.Item>
             </ListGroup>
         </div>
     )
+    }else{
+        return(
+            <div>
+
+            </div>
+        )
+    }
 }
 
 export default SongCard;

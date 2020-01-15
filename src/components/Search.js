@@ -16,9 +16,6 @@ class Search extends React.Component{
     handleSubmit = (e) => {
         e.preventDefault()
         this.props.handleCitySearch(this.state.searchedCity)
-        // this.setState({
-        //     searchedCity: ''
-        // })
     }
 
     
