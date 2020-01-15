@@ -18,16 +18,6 @@ import Spotify from './containers/Spotify';
 
 class App extends React.Component {
 
-  // constructor() 
-  // {
-  //   super();
-  //   this.state = {
-  //     accessToken: this.getHashParams().access_token,
-  //     refreshToken: this.getHashParams().refresh_token,
-  //     tokenTime: Date.now()
-  //   }
-  // }
-
   state = {
     accessToken: null,
     refreshToken: null,
@@ -35,7 +25,8 @@ class App extends React.Component {
     user: null,
     userId: null,
     filterString: '',
-    songs: []
+    songs: [],
+    playlistId: null
   }
 
 
@@ -46,23 +37,12 @@ class App extends React.Component {
     return separatedKeys;
   }
 
-
-  // state = {
-  //   user: null,
-  //   userId: null,
-  //   filterString: '', 
-  //   users: [],
-  //   songs: [],
-  //   accessToken: null
-  // }
-
   componentDidMount() {
     this.setState({
       accessToken: this.getHashParams().access_token,
       refreshToken: this.getHashParams().refresh_token,
       tokenTime: Date.now()
     })
-
     let parsed = queryString.parse(window.location.search);
     let accessToken = parsed.access_token;
     if (!accessToken)
@@ -98,24 +78,6 @@ class App extends React.Component {
             artist: artist_name,
             track: data.tracks.items[0]
           }]
-          //   {
-          //   //musicmap
-          //   artist: artist_name.name,
-          //   musicmapid: artist_name.id,
-          //   //spotify
-          //   uri: data.tracks.items[0].uri,
-          //   id: data.tracks.items[0].id,
-          //   type: data.tracks.items[0].type,
-          //   media_type: "audio",
-          //   name: data.tracks.items[0].name,
-          //   is_playable: data.tracks.items[0].is_playable,
-          //   album: {
-          //     uri: data.tracks.items[0].album.uri,
-          //     name: data.tracks.items[0].album.name,
-          //     images: [{url: data.tracks.items[0].images[0].url}],
-          //     artists: [{uri: data.tracks.items[0].artists[0].uri}]
-          //   }
-          // }
         }))
     }
 
@@ -171,6 +133,44 @@ class App extends React.Component {
         })
     })
   }
+
+  savePlaylistToSpotify = (events, name) => {
+    let parsed = queryString.parse(window.location.search);
+    let accessToken = parsed.access_token;
+    
+    fetch(`https://api.spotify.com/v1/users/${this.state.user}/playlists`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({
+        "name": `${name} Playlist`,
+        "description": "New playlist description",
+        "public": true
+      })
+    })
+    .then(resp => resp.json())
+    .then(data => {
+      this.setState({
+        playlistId: data.id
+      })
+    })
+    .then(() => this.saveSongsToSpotify(events))    
+  }
+
+  saveSongsToSpotify = (events) => {
+    let parsed = queryString.parse(window.location.search);
+    let accessToken = parsed.access_token;
+    console.log(accessToken)
+    console.log(events)
+    if(this.state.playlistId){
+      events.forEach(event => {
+        console.log(event.track.id)
+        fetch(`https://api.spotify.com/v1/playlists/${this.state.playlistId}/tracks?uris=spotify%3Atrack%3A${event.track.id}`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + accessToken }}
+      )})
+      }
+  }
+
   handleRefresh = async () => {
     let newToken = await fetch(`http://localhost:8888/refreshToken/${this.state.refreshToken}`)
     let parsedToken = await newToken.json();
@@ -197,7 +197,7 @@ class App extends React.Component {
       this.setState(newState,resolve);
     })
   }
-  logout = async (e) => {
+  logout = () => {
     this.setState({
       accessToken: "",
       refreshToken: "",
@@ -218,6 +218,8 @@ class App extends React.Component {
       )
     }
       else {
+        let home = window.location.href.slice(22, window.location.href.length-1)
+        let link = window.location.href.slice(26, window.location.href.length-1)
         return(
         <div>
             <Router>
@@ -225,21 +227,24 @@ class App extends React.Component {
                     <Navbar.Brand className="navbar-brand">
                         <img src={MusicMap} className="nav-logo"/>
                     </Navbar.Brand>
-                    <Link to="/" className="navbar-link">Home</Link>
-                    <Link to="/playlists" className="navbar-link">My Playlists</Link>
-                        {/* <Route
-                            path="/playlists"
-                            component={PlaylistsContainer} 
-                        /> */}
+
+                    <Link to={`/${home}`} className="navbar-link">Home</Link>
+                    <Route path={`/${home}`} component={App}/>
+
+                    <Link to={`/playlists${link}`} className="navbar-link">My Playlists</Link>
+                        <Route
+                            path={`/playlists${link}`} 
+                            render={<PlaylistsContainer userId={this.state.userId} />}
+                        />
+                    <Link to="/" className="navbar-link" onClick={this.logout}>Sign out</Link>
                 </Navbar>
               </Router>
-              <button onClick={(e) => this.logout(e)}>Sign out</button>
 
           <div>
             <h1>
               {this.state.user}'s Dashboard
             </h1>
-            <MainContainer spotifySearch={this.spotifySearch} songs={this.state.songs} savePlaylist={this.savePlaylist}/>
+            <MainContainer spotifySearch={this.spotifySearch} songs={this.state.songs} savePlaylist={this.savePlaylist} savePlaylistToSpotify={this.savePlaylistToSpotify}/>
             <PlaylistsContainer userId={this.state.userId}/>
           </div> 
         </div>

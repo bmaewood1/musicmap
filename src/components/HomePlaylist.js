@@ -9,7 +9,9 @@ class HomePlaylist extends React.Component{
                 {this.props.cityName} Playlist
                 {this.props.allEvents.map(event => <SongCard event={event} cityName={this.props.cityName}/>)}
                 <br></br>
-                <button onClick={()=> this.props.savePlaylist(this.props.allEvents, this.props.cityName)}>Save Playlist</button>
+                <button onClick={()=> this.props.savePlaylist(this.props.allEvents, this.props.cityName)}>Save Playlist to MusicMap</button>
+                <button onClick={()=> this.props.savePlaylistToSpotify(this.props.allEvents, this.props.cityName)}>Save Playlist to Spotify</button>
+
             </div>
         )
         } else{

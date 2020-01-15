@@ -24,6 +24,7 @@ class MainContainer extends React.Component{
     constructor(){
         super()
         this.state={
+            future: null,
             cityId: null,
             cityName: null,
             allEvents: [],
@@ -32,13 +33,28 @@ class MainContainer extends React.Component{
         }
     }
 
-    handleCitySearch = (city) => {
+    handleSearch = (city) => {
+        //get minimum date
         let today = new Date()
         let first = today.toString().slice(0,10)
         let second = today.toString().slice(11, 15)
         let join = first + ',' + second
         let min_date = (this.formatDate(join))
-        let newDate = this.addDays(today, 60);
+        //set future date
+        // if(timeFrame === "1 month"){
+        //     this.state.future = 30
+        // } else if(timeFrame === "2 months"){
+        //     this.state.future = 60
+        // } else if(timeFrame === "3 months"){
+        //     this.state.future = 90
+        // } else if(timeFrame === "4 months"){
+        //     this.state.future = 120
+        // } else if(timeFrame === "5 months"){
+        //     this.state.future = 150
+        // } else if(timeFrame === "6 months"){
+        //     this.state.future = 180
+        // }
+        let newDate = this.addDays(today, this.state.future);
         let first2 = newDate.toString().slice(0,10)
         let second2 = newDate.toString().slice(11,15)
         let join2 = first2 + ',' + second2
@@ -51,7 +67,8 @@ class MainContainer extends React.Component{
             })
         })
         if(this.state.cityId){
-            fetch(`https://api.songkick.com/api/3.0/metro_areas/${this.state.cityId}/calendar.json?min_date=${min_date}&max_date=${max_date}&apikey=r4d7PTJAcB8xIJ3g`)
+            // fetch(`https://api.songkick.com/api/3.0/metro_areas/${this.state.cityId}/calendar.json?min_date=${min_date}&max_date=${max_date}&apikey=r4d7PTJAcB8xIJ3g`)
+            fetch(`https://api.songkick.com/api/3.0/metro_areas/${this.state.cityId}/calendar.json?apikey=r4d7PTJAcB8xIJ3g`)
             .then(resp => resp.json())
             .then(data => {
                 this.setState({
@@ -92,8 +109,8 @@ class MainContainer extends React.Component{
     render(){
         return(
             <div>    
-                <Search handleCitySearch={this.handleCitySearch}/>
-                <HomePlaylist allEvents={this.state.allEvents} cityName={this.state.cityName} savePlaylist={this.props.savePlaylist}/>
+                <Search handleSearch={this.handleSearch}/>
+                <HomePlaylist allEvents={this.state.allEvents} cityName={this.state.cityName} savePlaylist={this.props.savePlaylist} savePlaylistToSpotify={this.props.savePlaylistToSpotify}/>
             </div>
         )
     }
