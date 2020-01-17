@@ -12,8 +12,6 @@ import {
 } from 'react-router-dom';
 import {Navbar} from 'react-bootstrap';
 import MusicMap from './MusicMap.png';
-import SpotifyPlayer from 'react-spotify-web-playback';
-import Spotify from './containers/Spotify';
 
 
 class App extends React.Component {
@@ -25,7 +23,6 @@ class App extends React.Component {
     user: null,
     userId: null,
     filterString: '',
-    songs: [],
     playlistId: null
   }
 
@@ -52,7 +49,8 @@ class App extends React.Component {
     }).then(resp => resp.json())
     .then(data => {
       this.setState({
-            user: data.display_name
+            user: data.display_name,
+            username: data.id
         })
       fetch('http://127.0.0.1:3000/api/v1/users', {
       method: 'POST',
@@ -138,7 +136,7 @@ class App extends React.Component {
     let parsed = queryString.parse(window.location.search);
     let accessToken = parsed.access_token;
     
-    fetch(`https://api.spotify.com/v1/users/${this.state.user}/playlists`, {
+    fetch(`https://api.spotify.com/v1/users/${this.state.username}/playlists`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + accessToken },
       body: JSON.stringify({
@@ -159,11 +157,8 @@ class App extends React.Component {
   saveSongsToSpotify = (events) => {
     let parsed = queryString.parse(window.location.search);
     let accessToken = parsed.access_token;
-    console.log(accessToken)
-    console.log(events)
     if(this.state.playlistId){
       events.forEach(event => {
-        console.log(event.track.id)
         fetch(`https://api.spotify.com/v1/playlists/${this.state.playlistId}/tracks?uris=spotify%3Atrack%3A${event.track.id}`, {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + accessToken }}

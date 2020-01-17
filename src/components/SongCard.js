@@ -28,7 +28,6 @@ const SongCard = (props) => {
     }else{
         return(
             <div>
-
             </div>
         )
     }
