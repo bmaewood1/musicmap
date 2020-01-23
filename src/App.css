@@ -14,14 +14,13 @@
 }
 
 .App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: #A7B8CC;
 }
 
 .App-link {
@@ -38,13 +37,22 @@
 }
 
 .navbar-brand {
-  display: flex;
+  display: inline;
   align-items: right;
+  background-color: #A7B8CC;
 }
 
 .navbar-link {
-  display: flex;
+  display: block;
   align-items: right;
+  padding: 10px;
+}
+
+.navbar {
+  margin: 0;
+  padding: 0;
+  display: block;
+  background-color: #A7B8CC;
 }
 
 .nav-logo {
@@ -54,14 +62,76 @@
   padding: 5px;
 }
 
-body {
-  font-family: sans-serif;
+.title {
+  font-size: 40px;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  padding-left: 30px
+}
+
+/* search form */
+
+.date-form {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.search-forms {
+  padding-left: 30px;
+}
+
+
+
+/* home playlist */
+.home-playlist-card {
+  padding-bottom: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.my-home-playlist {
+  text-align: center;
+  font-size: 20px;
+}
+
+.home-playlist {
+  padding-left: 30px;
+}
+
+/* my playlists */
+.my-playlists {
+  padding-left: 30px;
+}
+
+.my-playlists-title {
+  padding-bottom: 20px;
+}
+
+
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: 'IBM Plex Sans';
+  background-image: url(./headphones.png);
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 input {
   border: 1px solid #999;
   padding: 0.5rem;
   width: 300px;
+}
+
+button {
+  transition-duration: 0.4s;
+}
+
+button:hover {
+  background-color: #FFC14D;
+  color: white;
+  padding-right: 10px;
 }
 
 .no-suggestions {
@@ -86,13 +156,17 @@ input {
 
 .suggestion-active,
 .suggestions li:hover {
-  background-color: #008f68;
-  color: #fae042;
+  background-color: white;
+  color: #FFC14D;
   cursor: pointer;
   font-weight: 700;
 }
 
 .suggestions li:not(:last-of-type) {
   border-bottom: 1px solid #999;
+}
+
+.div.card.border-warning:hover{
+  background-color: "#229ac8";
 }
 

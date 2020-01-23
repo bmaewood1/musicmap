@@ -3,7 +3,6 @@ import Search from '../components/Search.js'
 import HomePlaylist from '../components/HomePlaylist.js'
 import queryString from 'query-string';
 
-
 const cities = [
     {
         displayName: 'New York',
@@ -484,17 +483,12 @@ class MainContainer extends React.Component{
         fetch(`https://api.spotify.com/v1/search?q=${artist_name.name}&type=track%2Cartist&market=US&limit=1`, {
             headers: { 'Authorization': 'Bearer ' + accessToken }
             }).then(resp => resp.json())
-            // .then(data => () => {this.setState({
-            //     songs: [...this.state.songs, {
-            //       artist: artist_name,
-            //       track: data.tracks.items[0]
-            //     }]
-            //   })})
             .then(data => {
+                if(data.tracks){
                 songs = {
                     artist: artist_name,
                     track: data.tracks.items[0]
-                }
+                }}
             })
             .then(() => this.addTracks(songs))
         }
@@ -515,75 +509,27 @@ class MainContainer extends React.Component{
         return new Date(theDate.getTime() + days*24*60*60*1000);
     }
 
-    constructor(){
-        super()
-        this.state={
+        state = {
             cityId: null,
             cityName: null,
             allEvents: [],
-            ready: false
+            ready: false,
+            saved: false
         }
-    }
 
-    // handleSearch = (city) => {
-        //get minimum date
-        // let today = new Date()
-        // let first = today.toString().slice(0,10)
-        // let second = today.toString().slice(11, 15)
-        // let join = first + ',' + second
-        // let min_date = (this.formatDate(join))
-        //set future date
-        // if(timeFrame === "1 month"){
-        //     this.state.future = 30
-        // } else if(timeFrame === "2 months"){
-        //     this.state.future = 60
-        // } else if(timeFrame === "3 months"){
-        //     this.state.future = 90
-        // } else if(timeFrame === "4 months"){
-        //     this.state.future = 120
-        // } else if(timeFrame === "5 months"){
-        //     this.state.future = 150
-        // } else if(timeFrame === "6 months"){
-        //     this.state.future = 180
-        // }
-        // let newDate = this.addDays(today, this.state.future);
-        // let first2 = newDate.toString().slice(0,10)
-        // let second2 = newDate.toString().slice(11,15)
-        // let join2 = first2 + ',' + second2
-        // let max_date = (this.formatDate(join2))
-    //     fetch(`https://api.songkick.com/api/3.0/search/locations.json?query=${city}&apikey=r4d7PTJAcB8xIJ3g`)
-    //     .then(resp => resp.json())
-    //     .then(data => {this.setState({
-    //         cityId: data.resultsPage.results.location[0].metroArea.id,
-    //         cityName: data.resultsPage.results.location[0].metroArea.displayName
-    //         })
-    //     })
-    //     if(this.state.cityId){
-        //     // fetch(`https://api.songkick.com/api/3.0/metro_areas/${this.state.cityId}/calendar.json?min_date=${min_date}&max_date=${max_date}&apikey=r4d7PTJAcB8xIJ3g`)
-        //     fetch(`https://api.songkick.com/api/3.0/metro_areas/${this.state.cityId}/calendar.json?apikey=r4d7PTJAcB8xIJ3g`)
-        //     .then(resp => resp.json())
-        //     .then(data => {
-        //         this.setState({
-        //             allEvents: data.resultsPage.results.event.slice(0, 5)
-        //         })
-        //     })
-        // this.handleConcerts(this.state.allEvents)
-    //     }
-    // }
-
-    handleSearch = (searchedCity) => {
-        //get minimum date
-        let today = new Date()
-        let first = today.toString().slice(0,10)
-        let second = today.toString().slice(11, 15)
+    handleSearch = (searchedCity, date) => {
+        //set min date
+        let start = new Date(date)
+        let first = start.toString().slice(0, 10)
+        let second = start.toString().slice(11, 15)
         let join = first + ',' + second
-        let min_date = (this.formatDate(join))
-        //get future date
-        let newDate = this.addDays(today, 30);
-        let first2 = newDate.toString().slice(0,10)
-        let second2 = newDate.toString().slice(11,15)
-        let join2 = first2 + ',' + second2
-        let max_date = (this.formatDate(join2))
+        let min_date = this.formatDate(join)
+        //set future date
+        let future = this.addDays(start, 30)
+        let first1 = future.toString().slice(0, 10)
+        let second1 = future.toString().slice(11, 15)
+        let join2 = first1 + ',' + second1
+        let max_date = this.formatDate(join2)
         //get city id
         let id = cities.find(city => 
             city.displayName === searchedCity
@@ -597,46 +543,83 @@ class MainContainer extends React.Component{
             fetch(`https://api.songkick.com/api/3.0/metro_areas/${id.id}/calendar.json?min_date=${min_date}&max_date=${max_date}&apikey=r4d7PTJAcB8xIJ3g`)
             .then(resp => resp.json())
             .then(data => {
-                firstPage = data.resultsPage.results.event
+                data.resultsPage.totalEntries > 0 ? 
+                firstPage = data.resultsPage.results.event :
+                firstPage = []
             })
-            .then(fetch(`https://api.songkick.com/api/3.0/metro_areas/${id.id}/calendar.json?min_date=${min_date}&max_date=${max_date}&page=2&apikey=r4d7PTJAcB8xIJ3g`)
-            .then(resp => resp.json())
-            .then(data => {
-                secondPage = data.resultsPage.results.event
-            })
+            .then(() => firstPage.length > 0 ? 
+                fetch(`https://api.songkick.com/api/3.0/metro_areas/${id.id}/calendar.json?min_date=${min_date}&max_date=${max_date}&page=2&apikey=r4d7PTJAcB8xIJ3g`)
+                .then(resp => resp.json())
+                .then(data => {
+                    secondPage = data.resultsPage.results.event
+                })
+                :
+                secondPage = []
+            )
             .then(() => 
-            {this.setState({
-                allEvents: firstPage.concat(secondPage).sort((a, b) => a.popularity < b.popularity ? 1 : -1).slice(0, 10) 
-            })})
-            .then(() => this.handleConcerts(this.state.allEvents)))
+                {this.setState({
+                    allEvents: firstPage.concat(secondPage).sort((a, b) => a.popularity < b.popularity ? 1 : -1).slice(0, 10)
+                })})
+            .then(() => this.handleConcerts(this.state.allEvents))
     }
         
     handleConcerts = (events) => {
+        if(events.length > 0){
         let artists = []
         artists = events.map(event => (
             {name: event.performance[0].displayName, id: event.id}
         ))
         artists.forEach(name => this.spotifySearch(name))
+        } else {
+            alert("No matches for this timeframe :(")
+            window.location.reload(false)
+        }
     }
 
 
     addTracks = (song) => {
         this.state.allEvents.forEach(event => {
-            if(event.id == song.artist.id){
-                event.track = song.track
-            }})
+                if(event.id && event.id === song.artist.id){
+                    event.track = song.track
+                }
+            })
             this.setState({
                 ready: true
             })
     }
 
+    handleNewSearch(){
+        window.location.reload(false)
+    }
+
+
     render(){
+        if(this.state.ready){
         return(
-            <div>    
-                <Search handleSearch={this.handleSearch}/>
-                {this.state.ready? <HomePlaylist allEvents={this.state.allEvents} cityName={this.state.cityName} savePlaylist={this.props.savePlaylist} savePlaylistToSpotify={this.props.savePlaylistToSpotify}/> : ''}
+            <div className="home-playlist" style={{paddingTop: '50px', paddingLeft: '50px'}}>
+                <h1 className="title" style={{
+                    color: '#212120',
+                    fontSize: '50px',
+                    fontFamily: 'Pavanam'}}>
+                    {this.props.user}'s Dashboard
+                </h1>
+                <button style={{position: 'absolute', left: '5%'}} onClick={this.handleNewSearch}>New Search</button>
+                <br></br>
+                <HomePlaylist allEvents={this.state.allEvents} cityName={this.state.cityName} savePlaylist={this.props.savePlaylist} savePlaylistToSpotify={this.props.savePlaylistToSpotify}/>
             </div>
-        )
+        )}
+        else if(!this.state.ready){
+        return(
+            <div className="home-playlist" style={{paddingTop: '50px', paddingLeft: '50px'}}>
+                <h1 className="title" style={{
+                    color: '#212120',
+                    fontSize: '50px',
+                    fontFamily: 'Pavanam'}}>
+                    {this.props.user}'s Dashboard
+                </h1>
+                <Search handleSearch={this.handleSearch}/>
+            </div>
+        )} 
     }
 }
 

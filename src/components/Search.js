@@ -1,6 +1,10 @@
 import React from 'react';
-import { Form, Button, InputGroup } from 'react-bootstrap';
+import { Form, Card } from 'react-bootstrap';
 import Autocomplete from './Autocomplete';
+import TextField from '@material-ui/core/TextField';
+import Alert from 'react-bootstrap/Alert'
+import '../App.css'
+
 
 const cities = [
     {
@@ -474,11 +478,35 @@ const cities = [
 ]
 const cities_search = cities.map(city => city.displayName)
 
+const variant = 'warning'
+
+let today = new Date()
+let first = today.toString().slice(0,10)
+let second = today.toString().slice(11, 15)
+let join = first + ',' + second
+let date = (formatDate(join))
+
+
+function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+    if (month.length < 2) 
+        month = '0' + month;
+    if (day.length < 2) 
+        day = '0' + day;
+    return [year, month, day].join('-');
+}
+
 class Search extends React.Component{
+    
 
     state = {
         searchedCity: '',
-        timeFrame: ''
+        date: date,
+        button: 'Submit',
+        alert: false
     }
 
 
@@ -489,27 +517,34 @@ class Search extends React.Component{
     }
 
     handleTimeChange = (e) => {
-        if(e.target.value !== " ")
         this.setState({
-            timeFrame: e.target.value
+            date: e.target.value
         })
     }
 
     handleSubmit = (e) => {
         e.preventDefault()
-        this.props.handleSearch(this.state.searchedCity)
-        this.setState({
-            searchedCity: ''
-        })
+        if(this.state.searchedCity === ''){
+            this.setState({
+                alert: true
+            })
+        } else {
+            this.props.handleSearch(this.state.searchedCity, this.state.date)
+            this.setState({
+                searchedCity: ''
+            })
+        }
     }
-
-    
+ 
     render(){
+        if(!this.state.alert){
         return(
-            <div>
+            <div className="search-forms">
+                <Card style={{ width: '28rem', backgroundColor: '#DEE6F0' }} border='warning' >
+                    <Card.Body>
                 <Form>
                     <Form.Group>
-                        Enter any US City:
+                        <a style={{fontWeight: 500}}>Enter any US City:</a>
                         <br></br>
                         <Autocomplete
                             suggestions={cities_search}
@@ -517,37 +552,73 @@ class Search extends React.Component{
                             type="city" placeholder="" 
                             value={this.state.searchedCity}  
                         />
-                        {/* <Form.Label></Form.Label>
-                        <InputGroup size="sm" className="mb-3">
-                            <InputGroup.Prepend>
-                                <InputGroup.Text id="inputGroup-sizing-sm">City      </InputGroup.Text>
-                            </InputGroup.Prepend>
-                                <Form.Control aria-label="City:" aria-describedby="inputGroup-sizing-default" type="city" placeholder="" value={this.state.searchedCity} onChange={(e) => this.handleCityChange(e)} />
-                        </InputGroup> */}
-                        {/* <InputGroup size="sm" className="mb-3">
-                            <InputGroup.Prepend>
-                                <InputGroup.Text id="inputGroup-sizing-sm">Timeframe</InputGroup.Text>
-                            </InputGroup.Prepend>
-                            <Form.Control aria-label="Timeframe:" as="select" placeholder="" value={this.state.timeFrame} onChange={(e) => this.handleTimeChange(e)}>
-                                <option> </option>
-                                <option>1 month</option>
-                                <option>2 months</option>
-                                <option>3 months</option>
-                                <option>4 months</option>
-                                <option>5 months</option>
-                                <option>6 months</option>
-                            </Form.Control>                        
-                        </InputGroup> */}
+                        <form noValidate className="date-form">
+                            <a style={{fontWeight: 500}}>Choose a date:</a>
+                            <br></br>
+                            <TextField
+                                id="date"
+                                type="date"
+                                defaultValue={date}
+                                onChange={this.handleTimeChange}
+                                InputLabelProps={{
+                                shrink: true,
+                                }}
+                            />
+                        </form>
                         <Form.Text className="text-muted">
                         </Form.Text>
-                        <Button variant="primary" type="submit" onClick={this.handleSubmit}>
-                            Submit
-                        </Button>
+                        <button variant="primary" type="submit" onClick={this.handleSubmit}>
+                            {this.state.button}
+                        </button>
                     </Form.Group>
                 </Form>
-
+                </Card.Body>
+            </Card>                
             </div>
         )
+        } else {
+            return(
+                    <div className="search-forms">
+                    <Alert variant={variant}>
+                        Please enter a city!
+                    </Alert>
+                        <Card style={{ width: '28rem', backgroundColor: '#DEE6F0' }} border='warning' >
+                            <Card.Body>
+                        <Form>
+                            <Form.Group>
+                                <a style={{fontWeight: 500}}>Enter any US City:</a>
+                                <br></br>
+                                <Autocomplete
+                                    suggestions={cities_search}
+                                    handleCityChange={this.handleCityChange}
+                                    type="city" placeholder="" 
+                                    value={this.state.searchedCity}  
+                                />
+                                <form noValidate className="date-form">
+                                    <a style={{fontWeight: 500}}>Choose a date:</a>
+                                    <br></br>
+                                    <TextField
+                                        id="date"
+                                        type="date"
+                                        defaultValue={date}
+                                        onChange={this.handleTimeChange}
+                                        InputLabelProps={{
+                                        shrink: true,
+                                        }}
+                                    />
+                                </form>
+                                <Form.Text className="text-muted">
+                                </Form.Text>
+                                <button variant="primary" type="submit" onClick={this.handleSubmit}>
+                                    {this.state.button}
+                                </button>
+                            </Form.Group>
+                        </Form>
+                        </Card.Body>
+                    </Card>                
+            </div>
+            )
+        }
     }
 }
 

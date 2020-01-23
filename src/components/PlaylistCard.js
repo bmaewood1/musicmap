@@ -1,31 +1,67 @@
 import React from 'react';
-import { ListGroup } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import PlaylistSongCard from './PlaylistSongCard.js'
+import queryString from 'query-string';
 
 class PlaylistCard extends React.Component{ 
 
-    state = {
-        songs: [],
-        button: 'Show Songs',
-        playlistIds: 0
+    constructor(props) {
+        super(props)
+        this.myRef = React.createRef()
+        this.state = {scrollTop: 0,         
+            songs: [],
+            button: 'Show Songs',
+            playlistIds: 0,
+            width: '22rem',
+            bc: '#DEE6F0'
+        }
+      }
+
+    onScroll = () => {
+        const scrollTop = this.myRef.current.scrollTop
+        this.setState({
+            scrollTop: scrollTop
+        })
     }
 
     removeSong = (songobject) => {
+        //delete on spotify
+        let playlist = ''
+        let parsed = queryString.parse(window.location.search);
+        let accessToken = parsed.access_token;
+        fetch("http://127.0.0.1:3000/api/v1/playlists")
+        .then(resp => resp.json())
+        .then(data => {
+            playlist = data.find(p => p.id === songobject.playlist_id)
+        })
+        .then(() => fetch(`https://api.spotify.com/v1/playlists/${playlist.spotify_playlistId}/tracks`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + accessToken },
+            body: JSON.stringify({"tracks": [
+                {
+                    "uri": songobject.spotify_url,
+                    "positions": [
+                        0
+                    ]
+                }
+            ]})
+        }))
+        //delete song on backend
         let ID = songobject.playlist_id
         fetch(`http://127.0.0.1:3000/api/v1/songs/${songobject.id}`, {
             method: 'DELETE',
             headers: {
-                'Content-type': 'application/json',
-                accepts: 'application/json'
-            }
-        })
-        .then(this.setState({
-            songs: this.state.songs.filter(song => song.id !== songobject.id),
-            playlistIds: this.state.songs.length - 1
-        }))
-        .then(this.state.playlistIds === 1 ? this.deletePlaylist(ID) : '' )
+                    'Content-type': 'application/json',
+                    accepts: 'application/json'
+                }
+            })
+            .then(this.setState({
+                    songs: this.state.songs.filter(song => song.id !== songobject.id),
+                    playlistIds: this.state.songs.length - 1
+                }))
+                .then(this.state.playlistIds === 1 ? this.deletePlaylist(ID) : '' )
+                   
     }
-
 
     deletePlaylist = (ID) => {
         fetch(`http://127.0.0.1:3000/api/v1/playlists/${ID}`, {
@@ -47,7 +83,9 @@ class PlaylistCard extends React.Component{
                         this.setState({
                             songs: [...this.state.songs, song],
                             button: 'Hide Songs',
-                            playlistIds: this.state.songs.length + 1
+                            playlistIds: this.state.songs.length + 1,
+                            width: '26rem',
+                            bc: '#98ACC3'
                         })
                     }
                 })
@@ -55,22 +93,29 @@ class PlaylistCard extends React.Component{
         } else {
             this.setState({
                 songs: [],
-                button: 'Show Songs'
+                button: 'Show Songs',
+                width: '22rem',
+                bc: '#DEE6F0'
             })
         }
+    }
+
+    newTab = (url) => { 
+        window.open(url, "_blank"); 
     }
     
     render(){
     const playlist = this.props.playlist
     return(
-        <div>
-            <ListGroup>
-                <ListGroup.Item key={this.props.playlist.id}>
-                    <h3>{playlist.location} Playlist (saved {playlist.created_at.slice(0, 10)})</h3>
+        <div ref={this.myRef} onScroll={this.onScroll} style={{overflow: 'scroll', width: '400px', height: '400px'}}>
+            <Card border="warning" style={{ width: this.state.width, backgroundColor: '#DEE6F0' }}  >
+                <Card.Header><b>{playlist.location} Playlist </b>(saved {playlist.created_at.slice(0, 10)})</Card.Header>
+                <Card.Body style={{backgroundColor: this.state.bc}}>
+                    {this.state.songs.length > 0 ? this.state.songs.map(song => <PlaylistSongCard newTab={this.newTab} removeSong={this.removeSong} song={song}/>) : '' }
                     <button onClick={() => this.toggleSongs(playlist)}>{this.state.button}</button>
-                    {this.state.songs.length > 0 ? this.state.songs.map(song => <PlaylistSongCard removeSong={this.removeSong} song={song}/>) : '' }
-                </ListGroup.Item>
-            </ListGroup>
+                    <button onClick={() => this.newTab(`https://open.spotify.com/playlist/${playlist.spotify_playlistId}`)}>View Playlist in Spotify</button>
+                </Card.Body>
+            </Card>
         </div>
     )
     }

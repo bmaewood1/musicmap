@@ -1,18 +1,11 @@
 import React from 'react';
 import './App.css';
 import queryString from 'query-string';
-import NavbarClass from './components/Navbar.js'
 import MainContainer from './containers/MainContainer.js';
 import PlaylistsContainer from './containers/PlaylistsContainer';
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  Link
-} from 'react-router-dom';
-import {Navbar} from 'react-bootstrap';
+import {BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import {Navbar, Nav} from 'react-bootstrap';
 import MusicMap from './MusicMap.png';
-
 
 class App extends React.Component {
 
@@ -22,8 +15,7 @@ class App extends React.Component {
     tokenTime: null,
     user: null,
     userId: null,
-    filterString: '',
-    playlistId: null
+    filterString: ''
   }
 
 
@@ -91,7 +83,7 @@ class App extends React.Component {
       ))
     }
 
-    savePlaylist = (playlist, city) => {
+    savePlaylist = (playlist, city, playlistId) => {
       fetch('http://127.0.0.1:3000/api/v1/playlists', {
         method: 'POST',
         headers: {
@@ -100,7 +92,8 @@ class App extends React.Component {
         },
         body: JSON.stringify({
           location: city,
-          user_id: this.state.userId
+          user_id: this.state.userId,
+          spotify_playlistId: playlistId
         })
       })
       .then(resp => resp.json())
@@ -109,6 +102,7 @@ class App extends React.Component {
 
     saveSongs = (data, playlist) => {
       playlist.forEach(song => {
+        if(song.track){
         fetch('http://127.0.0.1:3000/api/v1/songs', {
           method: 'POST',
           headers: {
@@ -122,20 +116,24 @@ class App extends React.Component {
             artist: song.track.artists[0].name,
             spotify_url: song.track.uri,
             track_id: song.track.id,
+            spotify_artistId: song.track.artists[0].id,
             // //event
             date: song.start.date, 
             venue: song.venue.displayName,
             category: song.type,
-            songkick_url: song.uri
+            songkick_url: song.uri,
+            lat: song.venue.lat,
+            lng: song.venue.lng
           })
         })
+      }
     })
   }
 
   savePlaylistToSpotify = (events, name) => {
     let parsed = queryString.parse(window.location.search);
     let accessToken = parsed.access_token;
-    
+    let playlistId = ''
     fetch(`https://api.spotify.com/v1/users/${this.state.username}/playlists`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + accessToken },
@@ -147,23 +145,24 @@ class App extends React.Component {
     })
     .then(resp => resp.json())
     .then(data => {
-      this.setState({
-        playlistId: data.id
-      })
+      playlistId = data.id
     })
-    .then(() => this.saveSongsToSpotify(events))    
+    .then(() => this.savePlaylist(events, name, playlistId))
+    .then(() => this.saveSongsToSpotify(events, playlistId))
   }
 
-  saveSongsToSpotify = (events) => {
+  saveSongsToSpotify = (events, playlistId) => {
     let parsed = queryString.parse(window.location.search);
     let accessToken = parsed.access_token;
-    if(this.state.playlistId){
       events.forEach(event => {
-        fetch(`https://api.spotify.com/v1/playlists/${this.state.playlistId}/tracks?uris=spotify%3Atrack%3A${event.track.id}`, {
+        if(event.track){
+        fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?uris=spotify%3Atrack%3A${event.track.id}`, {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + accessToken }}
-      )})
-      }
+      )
+      .then(alert("♪ Playlist saved ♪"))
+      .then(window.location.reload(false))
+    }})
   }
 
   handleRefresh = async () => {
@@ -192,57 +191,82 @@ class App extends React.Component {
       this.setState(newState,resolve);
     })
   }
-  logout = () => {
-    this.setState({
-      accessToken: "",
-      refreshToken: "",
-      tokenTime: "",
-      userId: null
-    })
-    window.location.pathname= "/";
-  }
+  
+    logout = () => {
+      this.setState({
+        accessToken: "",
+        refreshToken: "",
+        tokenTime: "",
+        userId: null
+      })
+      window.location.pathname= "/";
+    }
 
   render()
   {
     if (!this.state.userId) {
       return (
-        <div className = "loginPageDiv">
-          <h1>Welcome to MusicMap!</h1>
-            <button onClick={() => window.location='http://localhost:8888/login'}>Login Using Spotify</button>
+        <div className = "loginPageDiv" style={{  
+          backgroundImage: "url(" + "https://www.pexels.com/photo/people-in-concert-154147/" + ")",
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat'
+        }}>
+          <a style={{
+            color: '#666666', 
+            fontFamily: 'Pavanam', 
+            fontSize: '50px',
+            position: 'absolute', 
+            left: '42%', 
+            top: '29%',
+            transform: 'translate(-50%, -50%)',
+            fontWeight: '500'
+            }}>Welcome to </a>
+          <br></br>
+          <img src={MusicMap} width="360" height="100" style={{
+            position: 'absolute', 
+            left: '50%', 
+            top: '35%',
+            transform: 'translate(-50%, -50%)'}}/>
+          <br></br>
+            <button onClick={() => window.location='http://localhost:8888/login'} style={{
+              position: 'absolute', 
+              left: '47%', 
+              top: '44%',
+              transform: 'translate(-50%, -50%)',
+              fontSize: '17px',
+              fontFamily: 'Pavanam'
+            }}>Login Using Spotify</button>
             </div>
       )
     }
       else {
-        let home = window.location.href.slice(22, window.location.href.length-1)
         let link = window.location.href.slice(26, window.location.href.length-1)
         return(
-        <div>
             <Router>
-                <Navbar bg="light" variant="light">
-                    <Navbar.Brand className="navbar-brand">
-                        <img src={MusicMap} className="nav-logo"/>
-                    </Navbar.Brand>
-
-                    <Link to={`/${home}`} className="navbar-link">Home</Link>
-                    <Route path={`/${home}`} component={App}/>
-
-                    <Link to={`/playlists${link}`} className="navbar-link">My Playlists</Link>
-                        <Route
-                            path={`/playlists${link}`} 
-                            render={<PlaylistsContainer userId={this.state.userId} />}
-                        />
-                    <Link to="/" className="navbar-link" onClick={this.logout}>Sign out</Link>
-                </Navbar>
+              <div>
+                      <div style={{ backgroundColor: '#98ACC3' }}>
+                      <Navbar style={{ backgroundColor: '#98ACC3' }}>
+                      <Navbar.Brand style={{ backgroundColor: '#98ACC3' }}><img src={MusicMap} className="nav-logo" style={{width: '200px', height: '57px'}}/></Navbar.Brand>
+                          <Navbar.Collapse className="justify-content-left">
+                          <Nav style={{ backgroundColor: '#98ACC3' }}>
+                            <Link to={`/home${link}`} className="navbar-link" style={{color: 'white', fontWeight: 'bold'}}>Home</Link>
+                            <Link to={`/playlists${link}`} className="navbar-link" style={{color: 'white', fontWeight: 'bold'}}>My Playlists</Link>
+                          </Nav>
+                          </Navbar.Collapse>
+                          <Navbar.Collapse className="justify-content-end">
+                          <Nav style={{ backgroundColor: '#98ACC3' }}>
+                            <Link to="/" className="navbar-link" onClick={this.logout} style={{color: 'white', fontWeight: 'bold'}}>Sign out</Link>
+                          </Nav>
+                          </Navbar.Collapse>
+                      </Navbar>
+                      </div> 
+                <div >
+                      <Route path={`/home`} render={() => <MainContainer spotifySearch={this.spotifySearch} user={this.state.user} songs={this.state.songs} savePlaylist={this.savePlaylist} savePlaylistToSpotify={this.savePlaylistToSpotify}/>}/>
+                      <Route path={`/playlists`} render={() => <PlaylistsContainer userId={this.state.userId} user={this.state.user}/>}/>
+                </div> 
+              </div>
               </Router>
-
-          <div>
-            <h1>
-              {this.state.user}'s Dashboard
-            </h1>
-            <MainContainer spotifySearch={this.spotifySearch} songs={this.state.songs} savePlaylist={this.savePlaylist} savePlaylistToSpotify={this.savePlaylistToSpotify}/>
-            <PlaylistsContainer userId={this.state.userId}/>
-          </div> 
-        </div>
         )  
       }
     }
