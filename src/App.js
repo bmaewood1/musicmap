@@ -10,28 +10,12 @@ import MusicMap from './MusicMap.png';
 class App extends React.Component {
 
   state = {
-    accessToken: null,
-    refreshToken: null,
-    tokenTime: null,
     user: null,
-    userId: null,
-    filterString: ''
+    userId: null 
   }
 
-
-  getHashParams() {
-    let path = window.location.pathname;
-    let removeSlash = path.split("/");
-    let separatedKeys = queryString.parse(removeSlash[1]);
-    return separatedKeys;
-  }
 
   componentDidMount() {
-    this.setState({
-      accessToken: this.getHashParams().access_token,
-      refreshToken: this.getHashParams().refresh_token,
-      tokenTime: Date.now()
-    })
     let parsed = queryString.parse(window.location.search);
     let accessToken = parsed.access_token;
     if (!accessToken)
@@ -44,6 +28,7 @@ class App extends React.Component {
             user: data.display_name,
             username: data.id
         })
+        
       fetch('http://127.0.0.1:3000/api/v1/users', {
       method: 'POST',
       headers: {
@@ -165,42 +150,10 @@ class App extends React.Component {
     }})
   }
 
-  handleRefresh = async () => {
-    let newToken = await fetch(`http://localhost:8888/refreshToken/${this.state.refreshToken}`)
-    let parsedToken = await newToken.json();
-    if (parsedToken.refresh_token) {
-      this.setState({
-        accessToken: parsedToken.access_token,
-        refreshToken: parsedToken.refresh_token
-      })
-    }
-    else {
-      this.setState({
-        ...this.state,
-        accessToken: parsedToken.access_token
-      })
-    }
-  }
-  timeToken = () => {
-    console.log(Date.now() - this.state.tokenTime);
-    return (Date.now() - this.state.tokenTime)
-  }
 
-  setStateAsync = (newState) => {
-    return new Promise(resolve => {
-      this.setState(newState,resolve);
-    })
+  logout = () => {
+    window.location = 'http://localhost:3002/'
   }
-  
-    logout = () => {
-      this.setState({
-        accessToken: "",
-        refreshToken: "",
-        tokenTime: "",
-        userId: null
-      })
-      window.location.pathname= "/";
-    }
 
   render()
   {

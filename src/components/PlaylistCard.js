@@ -25,7 +25,7 @@ class PlaylistCard extends React.Component{
     }
 
     removeSong = (songobject) => {
-        //delete on spotify
+        //delete on 
         let playlist = ''
         let parsed = queryString.parse(window.location.search);
         let accessToken = parsed.access_token;
@@ -36,13 +36,10 @@ class PlaylistCard extends React.Component{
         })
         .then(() => fetch(`https://api.spotify.com/v1/playlists/${playlist.spotify_playlistId}/tracks`, {
             method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + accessToken },
+            headers: { 'Authorization': 'Bearer ' + accessToken},
             body: JSON.stringify({"tracks": [
                 {
-                    "uri": songobject.spotify_url,
-                    "positions": [
-                        0
-                    ]
+                    "uri": songobject.spotify_url
                 }
             ]})
         }))
